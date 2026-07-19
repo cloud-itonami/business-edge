@@ -1,0 +1,432 @@
+syntax = "proto3";
+
+package etzhayyim.edge.v1;
+
+option go_package = "github.com/etzhayyim/kyber-erp/gen/edge";
+
+import "google/protobuf/timestamp.proto";
+
+// ─── Enums ───
+
+enum PlanTier {
+  PLAN_TIER_UNSPECIFIED = 0;
+  PLAN_TIER_FREE = 1;
+  PLAN_TIER_PRO = 2;
+  PLAN_TIER_ENTERPRISE = 3;
+}
+
+enum TenantStatus {
+  TENANT_STATUS_UNSPECIFIED = 0;
+  TENANT_STATUS_ACTIVE = 1;
+  TENANT_STATUS_SUSPENDED = 2;
+}
+
+enum ComponentStatus {
+  COMPONENT_STATUS_UNSPECIFIED = 0;
+  COMPONENT_STATUS_DEPLOYING = 1;
+  COMPONENT_STATUS_ACTIVE = 2;
+  COMPONENT_STATUS_STOPPED = 3;
+  COMPONENT_STATUS_FAILED = 4;
+}
+
+enum DomainStatus {
+  DOMAIN_STATUS_UNSPECIFIED = 0;
+  DOMAIN_STATUS_PENDING = 1;
+  DOMAIN_STATUS_VERIFIED = 2;
+  DOMAIN_STATUS_FAILED = 3;
+}
+
+enum UsageEventType {
+  USAGE_EVENT_TYPE_UNSPECIFIED = 0;
+  USAGE_EVENT_TYPE_REQUEST = 1;
+  USAGE_EVENT_TYPE_KV_READ = 2;
+  USAGE_EVENT_TYPE_KV_WRITE = 3;
+  USAGE_EVENT_TYPE_COMPUTE_MS = 4;
+  USAGE_EVENT_TYPE_STORAGE_BYTES = 5;
+}
+
+// ─── Messages ───
+
+message Tenant {
+  string tenant_id = 1;
+  string org_id = 2;
+  PlanTier plan_tier = 3;
+  TenantStatus status = 4;
+  repeated string custom_domains = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message Component {
+  string component_id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  int32 version = 4;
+  string wasm_cid = 5;
+  repeated string routes = 6;
+  map<string, string> env = 7;
+  ComponentStatus status = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+message ComponentVersion {
+  string component_id = 1;
+  int32 version = 2;
+  string wasm_cid = 3;
+  string changelog = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message ApiKey {
+  string key_id = 1;
+  string name = 2;
+  string key_prefix = 3;
+  repeated string permissions = 4;
+  google.protobuf.Timestamp expires_at = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message UsageDaily {
+  string component_id = 1;
+  string date = 2;
+  int64 requests = 3;
+  int64 kv_reads = 4;
+  int64 kv_writes = 5;
+  int64 storage_bytes = 6;
+  int64 compute_ms = 7;
+}
+
+message UsageSummary {
+  PlanTier plan_tier = 1;
+  int64 total_requests = 2;
+  int64 total_kv_ops = 3;
+  int64 total_storage_bytes = 4;
+  int32 component_count = 5;
+  int32 custom_domain_count = 6;
+  int64 request_limit = 7;
+  int64 kv_ops_limit = 8;
+  int64 storage_limit = 9;
+  int32 component_limit = 10;
+  int32 custom_domain_limit = 11;
+}
+
+message CustomDomain {
+  string domain = 1;
+  string component_id = 2;
+  DomainStatus status = 3;
+  string verification_token = 4;
+  google.protobuf.Timestamp verified_at = 5;
+}
+
+message Deployment {
+  string deployment_id = 1;
+  string component_id = 2;
+  int32 version = 3;
+  ComponentStatus status = 4;
+  string error_message = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message RequestLog {
+  string request_id = 1;
+  string component_id = 2;
+  string method = 3;
+  string path = 4;
+  int32 status_code = 5;
+  int64 latency_us = 6;
+  google.protobuf.Timestamp ts = 7;
+}
+
+message Metrics {
+  string component_id = 1;
+  double avg_latency_us = 2;
+  double p99_latency_us = 3;
+  double error_rate = 4;
+  int64 total_requests = 5;
+  string period = 6;
+}
+
+// ─── ComponentCommandService ───
+
+message DeployComponentRequest {
+  bytes wasm_bytes = 1;
+  string name = 2;
+  repeated string routes = 3;
+  map<string, string> env = 4;
+  string changelog = 5;
+}
+
+message DeployComponentResponse {
+  Component component = 1;
+  Deployment deployment = 2;
+}
+
+message DeleteComponentRequest {
+  string component_id = 1;
+}
+
+message DeleteComponentResponse {}
+
+message RollbackComponentRequest {
+  string component_id = 1;
+  int32 version = 2;
+}
+
+message RollbackComponentResponse {
+  Component component = 1;
+  Deployment deployment = 2;
+}
+
+service ComponentCommandService {
+  rpc DeployComponent(DeployComponentRequest) returns (DeployComponentResponse);
+  rpc DeleteComponent(DeleteComponentRequest) returns (DeleteComponentResponse);
+  rpc RollbackComponent(RollbackComponentRequest) returns (RollbackComponentResponse);
+}
+
+// ─── KvCommandService ───
+
+message CreateNamespaceRequest {
+  string namespace = 1;
+}
+
+message CreateNamespaceResponse {}
+
+message DeleteNamespaceRequest {
+  string namespace = 1;
+}
+
+message DeleteNamespaceResponse {}
+
+message PutKeyRequest {
+  string namespace = 1;
+  string key = 2;
+  bytes value = 3;
+  int64 ttl_seconds = 4;
+}
+
+message PutKeyResponse {}
+
+message DeleteKeyRequest {
+  string namespace = 1;
+  string key = 2;
+}
+
+message DeleteKeyResponse {}
+
+service KvCommandService {
+  rpc CreateNamespace(CreateNamespaceRequest) returns (CreateNamespaceResponse);
+  rpc DeleteNamespace(DeleteNamespaceRequest) returns (DeleteNamespaceResponse);
+  rpc PutKey(PutKeyRequest) returns (PutKeyResponse);
+  rpc DeleteKey(DeleteKeyRequest) returns (DeleteKeyResponse);
+}
+
+// ─── TenantCommandService ───
+
+message UpdateTenantRequest {
+  PlanTier plan_tier = 1;
+}
+
+message UpdateTenantResponse {
+  Tenant tenant = 1;
+}
+
+message CreateApiKeyRequest {
+  string name = 1;
+  repeated string permissions = 2;
+  int64 ttl_seconds = 3;
+}
+
+message CreateApiKeyResponse {
+  ApiKey api_key = 1;
+  string raw_key = 2;
+}
+
+message RevokeApiKeyRequest {
+  string key_id = 1;
+}
+
+message RevokeApiKeyResponse {}
+
+message AddCustomDomainRequest {
+  string domain = 1;
+  string component_id = 2;
+}
+
+message AddCustomDomainResponse {
+  CustomDomain custom_domain = 1;
+}
+
+message RemoveCustomDomainRequest {
+  string domain = 1;
+}
+
+message RemoveCustomDomainResponse {}
+
+service TenantCommandService {
+  rpc UpdateTenant(UpdateTenantRequest) returns (UpdateTenantResponse);
+  rpc CreateApiKey(CreateApiKeyRequest) returns (CreateApiKeyResponse);
+  rpc RevokeApiKey(RevokeApiKeyRequest) returns (RevokeApiKeyResponse);
+  rpc AddCustomDomain(AddCustomDomainRequest) returns (AddCustomDomainResponse);
+  rpc RemoveCustomDomain(RemoveCustomDomainRequest) returns (RemoveCustomDomainResponse);
+}
+
+// ─── BusinessEdgeQueryService ───
+
+message ListComponentsRequest {
+  int32 offset = 1;
+  int32 limit = 2;
+}
+
+message ListComponentsResponse {
+  repeated Component items = 1;
+  int32 total = 2;
+  int32 offset = 3;
+  int32 limit = 4;
+}
+
+message GetComponentRequest {
+  string component_id = 1;
+}
+
+message GetComponentResponse {
+  Component component = 1;
+  repeated ComponentVersion versions = 2;
+}
+
+message GetComponentLogsRequest {
+  string component_id = 1;
+  int32 limit = 2;
+}
+
+message GetComponentLogsResponse {
+  repeated RequestLog logs = 1;
+}
+
+message ListNamespacesRequest {
+  int32 offset = 1;
+  int32 limit = 2;
+}
+
+message ListNamespacesResponse {
+  repeated string namespaces = 1;
+  int32 total = 2;
+}
+
+message ListKeysRequest {
+  string namespace = 1;
+  string prefix = 2;
+  int32 offset = 3;
+  int32 limit = 4;
+}
+
+message ListKeysResponse {
+  repeated string keys = 1;
+  int32 total = 2;
+}
+
+message GetKeyRequest {
+  string namespace = 1;
+  string key = 2;
+}
+
+message GetKeyResponse {
+  bytes value = 1;
+}
+
+message GetUsageSummaryRequest {}
+
+message GetUsageSummaryResponse {
+  UsageSummary summary = 1;
+}
+
+message ListUsageEventsRequest {
+  string component_id = 1;
+  string date_from = 2;
+  string date_to = 3;
+  int32 offset = 4;
+  int32 limit = 5;
+}
+
+message ListUsageEventsResponse {
+  repeated UsageDaily items = 1;
+  int32 total = 2;
+}
+
+message GetQuotaRequest {}
+
+message GetQuotaResponse {
+  UsageSummary summary = 1;
+  bool quota_exceeded = 2;
+}
+
+message GetTenantRequest {}
+
+message GetTenantResponse {
+  Tenant tenant = 1;
+}
+
+message ListApiKeysRequest {
+  int32 offset = 1;
+  int32 limit = 2;
+}
+
+message ListApiKeysResponse {
+  repeated ApiKey items = 1;
+  int32 total = 2;
+}
+
+message ListDeploymentsRequest {
+  string component_id = 1;
+  int32 offset = 2;
+  int32 limit = 3;
+}
+
+message ListDeploymentsResponse {
+  repeated Deployment items = 1;
+  int32 total = 2;
+}
+
+message GetDeploymentStatusRequest {
+  string deployment_id = 1;
+}
+
+message GetDeploymentStatusResponse {
+  Deployment deployment = 1;
+}
+
+message ListRequestLogsRequest {
+  string component_id = 1;
+  int32 limit = 2;
+}
+
+message ListRequestLogsResponse {
+  repeated RequestLog logs = 1;
+}
+
+message GetMetricsRequest {
+  string component_id = 1;
+  string period = 2;
+}
+
+message GetMetricsResponse {
+  Metrics metrics = 1;
+}
+
+service BusinessEdgeQueryService {
+  rpc ListComponents(ListComponentsRequest) returns (ListComponentsResponse);
+  rpc GetComponent(GetComponentRequest) returns (GetComponentResponse);
+  rpc GetComponentLogs(GetComponentLogsRequest) returns (GetComponentLogsResponse);
+  rpc ListNamespaces(ListNamespacesRequest) returns (ListNamespacesResponse);
+  rpc ListKeys(ListKeysRequest) returns (ListKeysResponse);
+  rpc GetKey(GetKeyRequest) returns (GetKeyResponse);
+  rpc GetUsageSummary(GetUsageSummaryRequest) returns (GetUsageSummaryResponse);
+  rpc ListUsageEvents(ListUsageEventsRequest) returns (ListUsageEventsResponse);
+  rpc GetQuota(GetQuotaRequest) returns (GetQuotaResponse);
+  rpc GetTenant(GetTenantRequest) returns (GetTenantResponse);
+  rpc ListApiKeys(ListApiKeysRequest) returns (ListApiKeysResponse);
+  rpc ListDeployments(ListDeploymentsRequest) returns (ListDeploymentsResponse);
+  rpc GetDeploymentStatus(GetDeploymentStatusRequest) returns (GetDeploymentStatusResponse);
+  rpc ListRequestLogs(ListRequestLogsRequest) returns (ListRequestLogsResponse);
+  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse);
+}
