@@ -50,14 +50,14 @@ The read-cap is real and you can watch it work — §5 of the quickstart flips t
 caller DID over one store and shows the same call returning two keys, then zero,
 then one.
 
-## The gap between `CLAUDE.md` and this code
+## The gap between `AGENTS.md` and this code
 
-`CLAUDE.md` describes a deployed system: four XRPC services, a `blkchn`-style
+`AGENTS.md` describes a deployed system: four XRPC services, a `blkchn`-style
 Worker, an appview, plan tiers with prices, a seven-step deploy flow ending in
 `edge-runtime` lazy-loading the component. **Almost none of that is in this
 repository**, and the parts that are use different names. Measured, not guessed:
 
-| `CLAUDE.md` says | in this repo |
+| `AGENTS.md` says | in this repo |
 |---|---|
 | 4 XRPC services / 27 RPCs (`proto/v1/business_edge.proto`) | 11 exported functions. They cover the *record* side of component deploy/get/list, custom-domain add/list, API-key create/list/get and usage reporting — and nothing else. No RPC is served; nothing generates from the proto |
 | 7 W-Protocol tables | 4 collections (`edge_tenants`, `edge_component_versions`, `edge_usage_events` have no representation) |
@@ -88,7 +88,7 @@ repository proper** and the other three are this README, the quickstart, and a
 one-line `.gitignore`.
 
 ```
-CLAUDE.md                            the system the project intends (see the gap above)
+AGENTS.md                            the system the project intends (see the gap above)
 MIGRATION-TODO.md                    extraction status: TRANSFORM, codemod pending
 NOTICE                               Apache-2.0 + etzhayyim Charter Rider v3.1
 README.edn / migration.edn           extraction provenance from etzhayyim/root

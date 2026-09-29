@@ -9,7 +9,7 @@ three behaviours you will hit in production if nobody tells you about them, and
 
 Read [`../README.md`](../README.md) first. The short version: this repo is the
 record layer for an edge platform, it executes nothing, and the deployed system
-its `CLAUDE.md` describes does not exist.
+its `AGENTS.md` describes does not exist.
 
 - §1–§2 need **nothing installed** — not even Node.
 - §3–§8 need **Node ≥ 20 and npm**, ~311 MB of disk, and network access to
@@ -29,7 +29,7 @@ git ls-files -z | xargs -0 wc -c
 ```
 
 ```
-    3573 CLAUDE.md
+    3573 AGENTS.md
     2114 MIGRATION-TODO.md
      534 NOTICE
      208 README.edn
@@ -439,7 +439,7 @@ Two separate effects:
 - **Nothing in the proto was exercised**, because no code generates or serves it.
   I read it; I did not run it.
 - **The XRPC services, Worker, appview, W-Protocol stream, `edge-runtime` data
-  plane and plan-tier billing in `CLAUDE.md` were not exercised, because no code
+  plane and plan-tier billing in `AGENTS.md` were not exercised, because no code
   for them is in this repository.** I checked that no repo named `edge-runtime`
   exists in `manifest/west.yml` (4,167 projects); I did not search GitHub at large.
 - **I did not run this on Linux or Windows**, and tested no Node version other
