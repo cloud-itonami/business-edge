@@ -6,7 +6,7 @@
  * directive 2026-06-03: PII / CUI / confidential migrate to etzhayyim when made
  * safe via kotoba E2E.
  *
- * SPLIT (real data surface from proto/v1/business_edge.proto + CLAUDE.md):
+ * SPLIT (real data surface from proto/v1/business_edge.proto + AGENTS.md):
  *   PUBLIC (plaintext AT records) — control-plane catalog with NO secret values:
  *     - component: deployed edge component metadata (name/version/wasmCid/routes/
  *       status). `env` (config/secret map) is EXCLUDED — secret custody stays etzhayyim.
